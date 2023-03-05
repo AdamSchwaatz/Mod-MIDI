@@ -1,6 +1,6 @@
 #include <Wire.h>
 #include <Adafruit_MCP23X17.h>
-#include <MIDI.h>
+//#include <MIDI.h>
 #include <FastLED.h>
 #include <Keypad.h>
 #include <EEPROM.h>
