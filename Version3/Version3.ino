@@ -1,24 +1,27 @@
 #include "Arduino.h"
 #include "Wire.h"
+#include "Keyboard.h"
 
-bool first;
-bool second;
-bool pressed;
-unsigned int firstTime;
-unsigned int secondTime;
-unsigned int currentTime;
-unsigned int debounceTime;
-unsigned long loopCount;
-unsigned long startTime;
-int diff;
-byte velocity;
-byte rowInput;
-int count;
-unsigned long testTime;
+const byte keyRows = 3;
+const byte buttonRows = 6;
+const byte cols = 10;
+
+
+unsigned int first[keyRows] = {0,0,0};
+unsigned int second[keyRows] = {0,0,0};
+unsigned int pressed[keyRows] = {0,0,0};
+bool switcher = false; //this is used to keep track of the switch from port a and b on the mcp, ignore for now //ACTION: implement this
+unsigned int currentTime = 0;
+unsigned int debounceTime = 50;
+unsigned long loopCount = 0;
+unsigned long startTime = 0;
+unsigned long testTime = 0;
+byte rowInput = 0;
+
+Key keys[keyRows][cols];
 
 void setup() {
   Serial.begin(38400);
-  // put your setup code here, to run once:
   Wire.begin();
   Wire.begin();
   Wire.beginTransmission(0x20); //to the mcp
@@ -33,95 +36,84 @@ void setup() {
   Wire.write(0x12); //address port a
   Wire.write(0x01); //send 1, so only output 1 is high
   Wire.endTransmission();
- 
-  first = false;
-  second = false;
-  pressed = false;
-  firstTime = 0;
-  secondTime = 0;
-  debounceTime = 50;
-  diff = 0;
-  velocity = 0;
-  count = 0;
-  rowInput = 0;
-  testTime = 0;
-  startTime = 0;
-  loopCount = 0;
 }
 
 void loop() {
   // This is just for making sure the loop isn't lagging
-  loopCount++;
-  if ( (millis()-startTime)>5000 ) {
-      Serial.print("Average loops per second = ");
-      Serial.println(loopCount/5);
-      startTime = millis();
-      loopCount = 0;
-  }
-
-  Wire.beginTransmission(0x20); //to mcp
-  Wire.write(0x13); //address port b
-  Wire.endTransmission();
-  Wire.requestFrom(0x20,1);; //request one byte from mcp
-  rowInput=Wire.read(); //read that byte and save into rowInput
-  currentTime = millis();//current time used throughout the loop
-  if(!pressed){
-    //all of this is done checking if the key has been pressed
-    if(!first){
-      if(bitRead(rowInput,1+2)){
-      //if(mcp.digitalRead(11)){
-        firstTime = currentTime;
-        first = true;
-      }
-    }else if(first){
-      if((currentTime - firstTime) > 500){
-        first = false;
-      }
-      count++;
-      if(bitRead(rowInput,0+2)){
-      //if(mcp.digitalRead(10)){
-        secondTime = currentTime;
-        second = true;
-
-        //calculate time difference
-        if(secondTime < firstTime){
-          diff = (65535 - firstTime) + secondTime;
-        }else{
-          diff = secondTime - firstTime;
-        }
-        
-        //calculate Velocity
-        if(diff > 65){
-          velocity = 5;
-        }else{
-          velocity = map(diff,3,65,127,5);
-          if(velocity > 127) velocity = 127;
-        }
-        
-        //debugging print statements 
-        Serial.print("First: ");
-        Serial.print(firstTime);
-        Serial.print(" Second: ");
-        Serial.print(secondTime);
-        Serial.print(" Difference: ");
-        Serial.print(diff);
-        Serial.print(" Count: ");
-        Serial.print(count);
-        Serial.print(" Velocity: ");
-        Serial.println(velocity);
-
-        //reset values
-        first = false;
-        second = false;
-        pressed = true;
-        count = 0;
-      }
+  // loopCount++;
+  // if ( (millis()-startTime)>5000 ) {
+  //     Serial.print("Average loops per second = ");
+  //     Serial.println(loopCount/5);
+  //     startTime = millis();
+  //     loopCount = 0;
+  // }
+  
+  for(byte c = 0; c<cols; c++){
+    byte num = 1;
+    //this sets one column high and the others low
+    if(c<8){
+      num = num << c; //set the correct pin to high and all the others low
+      Wire.beginTransmission(0x20); //to mcp
+      Wire.write(0x12); //address port b
+      Wire.write(num); //set the pins
+      Wire.endTransmission();
+    }else if(c<16){
+      num = num << (c - 8);
+      Wire.beginTransmission(0x20);
+      Wire.write(0x13);
+      Wire.write(num);
+      Wire.endTransmission();
     }
-  }else{
-    if((currentTime-firstTime) > debounceTime){
-      if(!bitRead(rowInput,1+2)){
-      //if(!mcp.digitalRead(11)){//} || !mcp.digitalRead(10)){
-        pressed = false;
+  
+
+    Wire.beginTransmission(0x20); //to mcp
+    Wire.write(0x13); //address port b
+    Wire.endTransmission();
+    Wire.requestFrom(0x20,1);; //request one byte from mcp
+    rowInput=Wire.read(); //read that byte and save into rowInput
+    
+    for(byte r = 0; r<keyRows;r++){
+      currentTime = millis();//current time used throughout the loop
+      if(!bitRead(pressed[r],c)){
+        //all of this is done checking if the key has been pressed
+        if(!bitRead(first[r],c)){
+          if(bitRead(rowInput,(r*2)+1+2)){
+            keys[r][c].firstTime = currentTime;
+            bitWrite(first[r],c,true);
+          }
+        }else if(bitRead(first[r],c)){
+          if((currentTime - keys[r][c].firstTime) > 500){
+            bitWrite(first[r],c,false);
+          }
+          if(bitRead(rowInput,(r*2)+2)){
+            keys[r][c].secondTime = currentTime;
+            bitWrite(second[r],c,true);
+
+            //calculate Velocity of keypress
+            keys[r][c].calculateVelocity();
+            
+            //debugging print statements 
+            Serial.print("First: ");
+            Serial.print(keys[r][c].firstTime);
+            Serial.print(" Second: ");
+            Serial.print(keys[r][c].secondTime);
+            Serial.print(" Difference: ");
+            Serial.print(keys[r][c].diff);
+            Serial.print(" Velocity: ");
+            Serial.println(keys[r][c].velocity);
+
+            //reset values
+            bitWrite(first[r],c,false);
+            bitWrite(second[r],c,false);
+            bitWrite(pressed[r],c,true);
+          }
+        }
+      }else{
+        if((currentTime-keys[r][c].firstTime) > debounceTime){
+          if(!bitRead(rowInput,(r*2)+1+2)){
+            bitWrite(pressed[r],c,false);
+          }
+        }
       }
     }
   }
