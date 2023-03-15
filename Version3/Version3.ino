@@ -1,21 +1,19 @@
 #include "Arduino.h"
-#include "Wire.h"
+#include "I2C.h"
 #include "Keyboard.h"
+#include "Wire.h"
 
 const byte keyRows = 3;
 const byte buttonRows = 6;
 const byte cols = 10;
 
-
 unsigned int first[keyRows] = {0,0,0};
 unsigned int second[keyRows] = {0,0,0};
 unsigned int pressed[keyRows] = {0,0,0};
-bool switcher = false; //this is used to keep track of the switch from port a and b on the mcp, ignore for now //ACTION: implement this
 unsigned int currentTime = 0;
 unsigned int debounceTime = 50;
 unsigned long loopCount = 0;
 unsigned long startTime = 0;
-unsigned long testTime = 0;
 byte rowInput = 0;
 
 Key keys[keyRows][cols];
@@ -23,7 +21,7 @@ Key keys[keyRows][cols];
 void setup() {
   Serial.begin(38400);
   Wire.begin();
-  Wire.begin();
+  Wire.setClock(400000);
   Wire.beginTransmission(0x20); //to the mcp
   Wire.write(0x00); //iodira register
   Wire.write(0x00); //a to outputs
@@ -40,13 +38,13 @@ void setup() {
 
 void loop() {
   // This is just for making sure the loop isn't lagging
-  // loopCount++;
-  // if ( (millis()-startTime)>5000 ) {
-  //     Serial.print("Average loops per second = ");
-  //     Serial.println(loopCount/5);
-  //     startTime = millis();
-  //     loopCount = 0;
-  // }
+  loopCount++;
+  if ( (millis()-startTime)>5000 ) {
+      Serial.print("Average loops per second = ");
+      Serial.println(loopCount/5);
+      startTime = millis();
+      loopCount = 0;
+  }
   
   for(byte c = 0; c<cols; c++){
     byte num = 1;
@@ -54,15 +52,27 @@ void loop() {
     if(c<8){
       num = num << c; //set the correct pin to high and all the others low
       Wire.beginTransmission(0x20); //to mcp
-      Wire.write(0x12); //address port b
+      Wire.write(0x12); //address port a
       Wire.write(num); //set the pins
       Wire.endTransmission();
+      if(c==0){
+        Wire.beginTransmission(0x20); //to mcp
+        Wire.write(0x13); //address port b
+        Wire.write(0x00); //set the pins
+        Wire.endTransmission();
+      }
     }else if(c<16){
       num = num << (c - 8);
       Wire.beginTransmission(0x20);
-      Wire.write(0x13);
+      Wire.write(0x13); //address port b
       Wire.write(num);
       Wire.endTransmission();
+      if(c==8){
+        Wire.beginTransmission(0x20);
+        Wire.write(0x12); //address port a
+        Wire.write(0x00);
+        Wire.endTransmission();
+      }
     }
   
 
@@ -110,7 +120,7 @@ void loop() {
         }
       }else{
         if((currentTime-keys[r][c].firstTime) > debounceTime){
-          if(!bitRead(rowInput,(r*2)+1+2)){
+          if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
             bitWrite(pressed[r],c,false);
           }
         }

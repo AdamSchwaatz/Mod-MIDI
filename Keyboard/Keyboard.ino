@@ -1,8 +1,8 @@
 #include <Wire.h>
-#include <Adafruit_MCP23X17.h>
+//#include <Adafruit_MCP23X17.h>
 //#include <MIDI.h>
-#include <FastLED.h>
-#include <Keypad.h>
+//#include <FastLED.h>
+#include <Keyboard.h>
 #include <EEPROM.h>
 #include <Button.h>
 #include "SPI.h"
@@ -39,6 +39,13 @@ const byte banks = 4;
 const byte keyRows = 3;
 const byte buttonRows = 6;
 const byte cols = 10;
+
+unsigned int first[keyRows] = {0,0,0};
+unsigned int second[keyRows] = {0,0,0};
+unsigned int pressed[keyRows] = {0,0,0};
+unsigned int currentTime = 0;
+unsigned int debounceTime = 50;
+byte rowInput = 0;
 
 byte extra[buttonRows][cols] = { //i don't think i'm going to need this
   {3,9,15,21,27,33,39,45,51,57},
@@ -82,17 +89,15 @@ Keypad bankOne(makeKeymap(defaultKeys),rowPins,colPins,buttonRows,cols);
 
 TFT_eSPI tft = TFT_eSPI();
 
-unsigned long loopCount;
-unsigned long startTime;
+unsigned int loopCount = 0;
+unsigned int startTime = 0;
 
 void setup(){
   
   //Serial.begin(31250); //MIDI baud rate
   Serial.begin(38400);
-  loopCount = 0;
-  startTime = millis();
-  FastLED.addLeds<LED_TYPE, ledPin, COLOR_ORDER>(leds, numLEDs).setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(64);
+  //FastLED.addLeds<LED_TYPE, ledPin, COLOR_ORDER>(leds, numLEDs).setCorrection(TypicalLEDStrip);
+  //FastLED.setBrightness(64);
 
   edoUp.begin();
   edoDown.begin();
