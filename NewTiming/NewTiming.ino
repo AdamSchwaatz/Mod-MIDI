@@ -87,16 +87,16 @@ void setup(){
 void loop(){
  
   // This is just for making sure the loop isn't lagging
-  loopCount++;
-  int number = (millis()-startTime);
-  lagger =  number > 5000;
-  Serial.println(number);
-  if ( lagger ) {
-      Serial.print("Average loops per second = ");
-      Serial.println(loopCount/5);
-      startTime = millis();
-      loopCount = 0;
-  }
+  // loopCount++;
+  // int number = (millis()-startTime);
+  // lagger =  number > 5000;
+  // Serial.println(number);
+  // if ( lagger ) {
+  //     Serial.print("Average loops per second = ");
+  //     Serial.println(loopCount/5);
+  //     startTime = millis();
+  //     loopCount = 0;
+  // }
   // testTime = micros();
 
   //bankOne.pin_write(bankOne.colPins[1],HIGH);
