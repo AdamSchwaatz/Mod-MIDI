@@ -1,7 +1,8 @@
 #include "Arduino.h"
+#include "Control_Surface.h"
 #include "I2C.h"
 #include "Keyboard.h"
-//#include "Control_Surface.h"
+
 
 const byte keyRows = 3;
 const byte buttonRows = 6;
@@ -16,17 +17,17 @@ unsigned long loopCount = 0;
 unsigned long startTime = 0;
 byte rowInput = 0;
 
-byte defaultKeys[keyRows][cols] = {
+const AddressMatrix<buttonRows,cols> defaultKeys = {{
   {2,5,8,11,14,17,20,23,26,29},
   {1,4,7,10,13,16,19,22,25,28},
   {3,6,9,12,15,18,21,24,27,30}
-};
+}};
 
 Key keys[keyRows][cols];
-//USBDebugMIDI_Interface midi;
+HairlessMIDI_Interface midi(115200);
 
 void setup() {
-  Serial.begin(38400);
+  Serial.begin(115200);
   I2c.begin();
   I2c.setSpeed(true);
   I2c.write(0x20,0x00,0x00); //a register to outputs
@@ -87,15 +88,15 @@ void loop() {
             keys[r][c].calculateVelocity();
             
             //debugging print statements 
-            Serial.print("First: ");
-            Serial.print(keys[r][c].firstTime);
-            Serial.print(" Second: ");
-            Serial.print(keys[r][c].secondTime);
-            Serial.print(" Difference: ");
-            Serial.print(keys[r][c].diff);
-            Serial.print(" Velocity: ");
-            Serial.println(keys[r][c].velocity);
-            //midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
+            // Serial.print("First: ");
+            // Serial.print(keys[r][c].firstTime);
+            // Serial.print(" Second: ");
+            // Serial.print(keys[r][c].secondTime);
+            // Serial.print(" Difference: ");
+            // Serial.print(keys[r][c].diff);
+            // Serial.print(" Velocity: ");
+            // Serial.println(keys[r][c].velocity);
+            midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
 
             //reset values
             bitWrite(first[r],c,false);
@@ -107,6 +108,7 @@ void loop() {
         if((currentTime-keys[r][c].firstTime) > debounceTime){
           if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
             bitWrite(pressed[r],c,false);
+            midi.sendNoteOff({defaultKeys[r][c],CHANNEL_1},0);
           }
         }
       }
