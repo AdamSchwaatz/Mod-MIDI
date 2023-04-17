@@ -112,10 +112,12 @@ void setup(){
   if(EEPROM.read(0)==255){
     edo = 12;
     octave = 0;
+    currentBanks = 1;
     EEPROM.write(0,1);//this makes sure this is only run the very first time
   }else{ //else continue from where you last were
     edo = EEPROM.read(1);
     octave = EEPROM.read(2);
+    currentBanks = EEPROM.read(3);
   }
 
   //GPIO expander setup
@@ -347,7 +349,7 @@ void switchingModes(){
     //save the current key config to the eeprom 
     //Take the enabled array and save it to the eeprom at the appropriate location
     for(byte i=0;i<15;i++){
-      EEPROM.write(((edo-1)*15)+3+i, enabled[i]);
+      EEPROM.write(((edo-1)*15)+4+i, enabled[i]);
     }
     //update the screen with the logo at the top
     tft.fillScreen(TFT_BLACK);
@@ -388,7 +390,7 @@ void switchingModes(){
     //update the enabled array from the eeprom
     //this should be redundant, but just to be sure
     for(byte i=0;i<15;i++){
-      enabled[i] = EEPROM.read(((edo-1)*15)+3+i);
+      enabled[i] = EEPROM.read(((edo-1)*15)+4+i);
     }
 
     currentBanks = addressCounter + 1; //make sure you have the right number of banks
@@ -434,7 +436,7 @@ void updateEdoKeyConfig(){
 
   //update the enabled array from the eeprom
   for(byte i=0;i<15;i++){
-    enabled[i] = EEPROM.read(((edo-1)*15)+3+i);
+    enabled[i] = EEPROM.read(((edo-1)*15)+4+i);
   }
 
   //do i need to make sure this doesn't happen when you are in the key config mode. QUESTION
