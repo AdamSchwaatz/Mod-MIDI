@@ -4,7 +4,7 @@
 #include <FastLED.h>
 #include <Keyboard.h>
 #include <EEPROM.h>
-#include <Button.h>
+#include <Buttons.h>
 #include "SPI.h"
 #include "TFT_eSPI.h"
 #include "Control_Surface.h"
@@ -32,15 +32,15 @@ const int numLEDs = 119; //120, starts at 0
 CRGB leds[numLEDs];
 const int ledPin = 5;
 
-uint8_t defaultAddresses[4] = {0x0,0x1,0x2,0x3};
+uint8_t defaultAddresses[4] = {0x20,0x21,0x22,0x24};
 uint8_t actualAddresses[4] = {0x0,0x1,0x2,0x3};
 uint8_t tempAddresses[4] = {0x4,0x4,0x4,0x4};
-byte addressCounter = 0;
+uint8_t addressCounter = 0;
 
-const byte totalBanks = 4;
-const byte keyRows = 3;
-const byte buttonRows = 6;
-const byte cols = 10;
+const uint8_t totalBanks = 4;
+const uint8_t keyRows = 3;
+const uint8_t buttonRows = 6;
+const uint8_t cols = 10;
 
 unsigned int first[totalBanks][keyRows] = {0,0,0};
 unsigned int second[totalBanks][keyRows] = {0,0,0};
@@ -48,7 +48,7 @@ unsigned int pressed[totalBanks][keyRows] = {0,0,0};
 unsigned int currentTime = 0;
 unsigned int debounceTime = 50;
 
-byte extra[buttonRows][cols] = { //i don't think i'm going to need this
+uint8_t extra[buttonRows][cols] = { //i don't think i'm going to need this
   {3,9,15,21,27,33,39,45,51,57},
   {4,10,16,22,28,34,40,46,52,58},
   {1,7,13,19,25,31,37,43,49,55},
@@ -57,31 +57,31 @@ byte extra[buttonRows][cols] = { //i don't think i'm going to need this
   {6,12,18,24,30,36,43,48,54,60}
 };
 
-byte AddressMatrix<buttonRows,cols> defaultKeys = {{
+AddressMatrix<buttonRows,cols> defaultKeys = {{
   {2,5,8,11,14,17,20,23,26,29},
   {1,4,7,10,13,16,19,22,25,28},
   {3,6,9,12,15,18,21,24,27,30}
 }};
-byte AddressMatrix<buttonRows,cols>[4] actualKeys;
+AddressMatrix<buttonRows,cols> actualKeys[4];
 
 Key keys[totalBanks][keyRows][cols];
 
-HairlessMIDI_Interface midi(115200);
+//HairlessMIDI_Interface midi(115200); //UNCOMMENT
 
 
-byte rowPins[buttonRows] = {10,11,12,13,14,15};
-byte colPins[cols] = {0,1,2,3,4,5,6,7,8,9};
+uint8_t rowPins[buttonRows] = {10,11,12,13,14,15};
+uint8_t colPins[cols] = {0,1,2,3,4,5,6,7,8,9};
 
-byte edo;
-byte octave;
-byte currentBanks;
+uint8_t edo;
+uint8_t octave;
+uint8_t currentBanks;
 
-byte enabled[15] = {
+uint8_t enabled[15] = {
   0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,
   0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,0b11111111,0b11111111
 };
 
-Button edoUp(2), edoDown(3), octaveUp(4), octaveDown(5), edit(6); //create the button objects
+Buttons edoUp(2), edoDown(3), octaveUp(4), octaveDown(5), edit(6); //create the button objects
 
 TFT_eSPI tft = TFT_eSPI(); //create the LCD object
 
@@ -92,17 +92,18 @@ void setup(){
   
   //Serial.begin(31250); //MIDI baud rate
   Serial.begin(38400);
-  
+  Serial.print("starting");
   //LED Setup
   FastLED.addLeds<LED_TYPE, ledPin, COLOR_ORDER>(leds, numLEDs);//.setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(255);
-
+  Serial.print("starting2");
   //Control Buttons
   edoUp.begin();
   edoDown.begin();
   octaveUp.begin();
   octaveDown.begin();
   edit.begin();
+  Serial.print("starting3");
 
   tft.begin(); //initialize LCD
   tft.setRotation(1); //rotate LCD
@@ -119,25 +120,32 @@ void setup(){
     octave = EEPROM.read(2);
     currentBanks = EEPROM.read(3);
   }
-
+  Serial.print("starting4");
   //GPIO expander setup
   I2c.begin();
   I2c.setSpeed(true);
-  for(byte b = 0;b<3;b++){
-    I2c.write(defaultAddresses[b],0x00,0x00); //a register to outputs
-    I2c.write(defaultAddresses[b],0x01,0b11111100);//9 and 10 are outputs
-    I2c.write(defaultAddresses[b],0x12,0x01); //send 1, so only output 1 is high
+  for(uint8_t b = 0;b<3;b++){
+    Serial.print("testing1");
+    Serial.println(defaultAddresses[b]);
+    I2c.write(defaultAddresses[b],(uint8_t) 0x00,(uint8_t) 0x00); //a register to outputs
+    Serial.print("testing2");
+    I2c.write(defaultAddresses[b],(uint8_t) 0x01,(uint8_t) 0b11111100);//9 and 10 are outputs
+    Serial.print("testing3");
+    I2c.write(defaultAddresses[b],(uint8_t) 0x12,(uint8_t) 0x01); //send 1, so only output 1 is high
+    Serial.print("testing4");
   }
-
+  Serial.print("starting5");
   delay(1000);
   updateEdoKeyConfig();
   //midi.begin(); //FINALIZE
   currentState = PLAYING; //NOTE: this assumes that the bank setup is the same
   switchingModes();
+  Serial.print("starting6");
   updateEdoKeyConfig();
 }
   
 void loop(){
+  Serial.println("Looping");
   //This is just for making sure the loop isn't lagging
   // loopCount++;
   // if ( (millis()-startTime)>5000 ) {
@@ -156,7 +164,7 @@ void loop(){
 
 void keyboard(){
   //Loop through the columns
-  for(byte c = 0; c<cols;c++){
+  for(uint8_t c = 0; c<cols;c++){
     //Check the columns for pressed keys
     switch(currentBanks){
       case 4:
@@ -205,29 +213,29 @@ void controlButtons(){
   }
 } //end of control buttons function
 
-void setColumn(byte bank, byte column){
+void setColumn(uint8_t bank, uint8_t column){
   //Set one column high and the others low for keyboard matrix
-  if(c<8){
-    I2c.write(actualAddresses[bank],0x12,1<<c); //set the correct pin to high and all the others low on gpioa
-    if(c==0){
-      I2c.write(actualAddresses[bank],0x13,0x00); //set the gpiob pins to low
+  if(column<8){
+    I2c.write(actualAddresses[bank],(uint8_t) 0x12,(uint8_t) (1<<column)); //set the correct pin to high and all the others low on gpioa
+    if(column==0){
+      I2c.write(actualAddresses[bank],(uint8_t) 0x13,(uint8_t) 0x00); //set the gpiob pins to low
     }
   }else{//} if(c<16){ //this second if didn't feel necessary
-    I2c.write(actualAddresses[bank],0x13,1<<(c-8)); //set the correct pin high on gpiob and the others lwo
-    if(c==8){
-      I2c.write(actualAddresses[bank],0x12,0x00); //set the gpioa pins low
+    I2c.write(actualAddresses[bank],(uint8_t) 0x13,(uint8_t) (1<<(column-8))); //set the correct pin high on gpiob and the others lwo
+    if(column==8){
+      I2c.write(actualAddresses[bank],(uint8_t) 0x12,(uint8_t) 0x00); //set the gpioa pins low
     }
   }
 } //end of set column function
 
-void checkColumn(byte bank, byte column){
+void checkColumn(uint8_t bank, uint8_t c){
 
-  setColumn(bank,column); //set the appropriate pins for the keyboard matrix
+  setColumn(bank,c); //set the appropriate pins for the keyboard matrix
 
-  I2c.read(actualAddresses[bank],0x13,1); //request the row data
-  byte rowInput=I2c.receive(); //read that byte and save into rowInput
+  I2c.read(actualAddresses[bank],(uint8_t) 0x13,(uint8_t) 1); //request the row data
+  uint8_t rowInput=I2c.receive(); //read that uint8_t and save into rowInput
 
-  for(byte r = 0; r<keyRows;r++){
+  for(uint8_t r = 0; r<keyRows;r++){
     currentTime = millis();//current time used throughout the loop
     if(!bitRead(pressed[bank][r],c)){
       //all of this is done checking if the key has been pressed
@@ -259,21 +267,21 @@ void checkColumn(byte bank, byte column){
             case PLAYING:
 
               keys[bank][r][c].calculateVelocity(); //calculate Velocity of keypress
-              midi.sendNoteOn({actualKeys[bank][r][c],CHANNEL_1},keys[bank][r][c].velocity); //send the midi note
+              //midi.sendNoteOn({actualKeys[bank][r][c],CHANNEL_1},keys[bank][r][c].velocity); //send the midi note
               //increase the brightness to full when a key is pressed
-              leds[b*30 + r*10 + c].setHSV(actualKeys[b][r][c]%edo*213/edo,255,255); 
+              leds[bank*30 + r*10 + c].setHSV(actualKeys[bank][r][c]%edo*213/edo,255,255); 
               break;
 
             case BANK_SETUP:
 
               bool newBank = true;
-              for(byte i = 0; i < totalBanks; i++){
-                if(actualAddresses[b] == tempAddresses[i]){
+              for(uint8_t i = 0; i < totalBanks; i++){
+                if(actualAddresses[bank] == tempAddresses[i]){
                   newBank = false; //check if there has been a key pressed in this bank before
                 }
                 if(newBank){ //it is a new bank
-                  tempAddresses[addressCounter] = actualAddresses[b];
-                  for(byte x = 0; x < 30; x++){
+                  tempAddresses[addressCounter] = actualAddresses[bank];
+                  for(uint8_t x = 0; x < 30; x++){
                     leds[x + 30*addressCounter].setRGB(255,255,255); //Turn on the leds for an entire bank when a key is pressed in a new bank
                   }
                   FastLED.show(); //set that banks LEDs white
@@ -287,7 +295,7 @@ void checkColumn(byte bank, byte column){
             case KEY_CONFIG:
 
               //Toggles between enabled and disabled for each key
-              byte i = bank * 30 + r * 10 + c;
+              uint8_t i = bank * 30 + r * 10 + c;
               if(bitRead(enabled[i/8],i%8)){
                 leds[i].setRGB(0,0,0); //turn off the led for the now disabled key
                 bitWrite(enabled[i/8],i%8,0);
@@ -309,9 +317,9 @@ void checkColumn(byte bank, byte column){
         if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
           bitWrite(pressed[bank][r],c,false);
           if(currentState == PLAYING){
-            midi.sendNoteOff({actualKeys[bank][r][c],CHANNEL_1},0);
+            //midi.sendNoteOff({actualKeys[bank][r][c],CHANNEL_1},0);
             //return the brightness back down to normal
-            leds[b*30 + r*10 + c].setHSV(actualKeys[b][r][c]%edo*213/edo,255,125); 
+            leds[bank*30 + r*10 + c].setHSV(actualKeys[bank][r][c]%edo*213/edo,255,125); 
           }
         }
       }
@@ -348,7 +356,7 @@ void switchingModes(){
   if(currentState == PLAYING){
     //save the current key config to the eeprom 
     //Take the enabled array and save it to the eeprom at the appropriate location
-    for(byte i=0;i<15;i++){
+    for(uint8_t i=0;i<15;i++){
       EEPROM.write(((edo-1)*15)+4+i, enabled[i]);
     }
     //update the screen with the logo at the top
@@ -371,10 +379,14 @@ void switchingModes(){
   }else if(currentState == BANK_SETUP){
 
     currentBanks = 4; //start checking keys in all four banks
-    actualAddresses = defaultAddresses; //set the addresses to default
+    for(int8_t i = 0;i<totalBanks;i++){
+      actualAddresses[i] = defaultAddresses[i]; //set the addresses to default
+    }
     fill_solid(leds,numLEDs,CRGB::Black); //Turn every led black
     FastLED.show();
-    tempAddresses = {0x4,0x4,0x4,0x4};
+    for(int8_t i = 0;i<totalBanks;i++){
+      tempAddresses[i] = 0x04; //reset temp addresses
+    }
     addressCounter = 0;
     //Update the screen to show bank setup 
     //ACTION check what this looks like and if the above causes any errors
@@ -389,13 +401,15 @@ void switchingModes(){
   }else if(currentState == KEY_CONFIG){
     //update the enabled array from the eeprom
     //this should be redundant, but just to be sure
-    for(byte i=0;i<15;i++){
+    for(uint8_t i=0;i<15;i++){
       enabled[i] = EEPROM.read(((edo-1)*15)+4+i);
     }
 
     currentBanks = addressCounter + 1; //make sure you have the right number of banks
-    actualAddresses = tempAddresses; //set the addresses to the right order
-    for(byte i = 0;i < numLEDs; i++){
+    for(int8_t i = 0;i<totalBanks;i++){
+      actualAddresses[i] = tempAddresses[i]; //set the addresses to the right order
+    }
+    for(uint8_t i = 0;i < numLEDs; i++){
       if(bitRead(enabled[i/8],i%8)){
         leds[i].setRGB(255,255,255); //turn on the leds for the enabled keys
       }else{
@@ -435,7 +449,7 @@ void updateScreen(){
 void updateEdoKeyConfig(){
 
   //update the enabled array from the eeprom
-  for(byte i=0;i<15;i++){
+  for(uint8_t i=0;i<15;i++){
     enabled[i] = EEPROM.read(((edo-1)*15)+4+i);
   }
 
@@ -443,21 +457,21 @@ void updateEdoKeyConfig(){
   //i think you should just lose your progress if you switch while in key config mode. QUESTION
   
   //reset the keymaps
-  for(byte b = 0;b < totalBanks;b++){
-    for(byte r = 0; r < keyRows;r++){
-      for(byte c = 0;c < cols;c++){
+  for(uint8_t b = 0;b < totalBanks;b++){
+    for(uint8_t r = 0; r < keyRows;r++){
+      for(uint8_t c = 0;c < cols;c++){
         actualKeys[b][r][c] = defaultKeys[r][c] + b*30;
       }
     }
   }
   //update the keymap to match the enabled array
-  byte disabledKeys = 0;
-  for(byte i = 0; i < 119; i++){
+  uint8_t disabledKeys = 0;
+  for(uint8_t i = 0; i < 119; i++){
     if(!bitRead(enabled[i/8],i%8)){
       disabledKeys++;
-      for(byte b = 0;b < 3;b++){
-        for(byte r = 0; r < keyRows;r++){
-          for(byte c = 0;c < cols;c++){
+      for(uint8_t b = 0;b < 3;b++){
+        for(uint8_t r = 0; r < keyRows;r++){
+          for(uint8_t c = 0;c < cols;c++){
             if((b*30 + defaultKeys[r][c])>i){
               actualKeys[b][r][c] = defaultKeys[r][c] + b*30 - disabledKeys;
             }else if((b*30 + defaultKeys[r][c]) == i){
@@ -471,9 +485,9 @@ void updateEdoKeyConfig(){
 
   //Create a gradient of colors for the keys given the current edo
   //basically it repeats every "edo" many keys only across the enabled keys
-  for(byte b = 0;b < totalBanks;b++){
-    for(byte r = 0; r < keyRows;r++){
-      for(byte c = 0;c < cols;c++){
+  for(uint8_t b = 0;b < totalBanks;b++){
+    for(uint8_t r = 0; r < keyRows;r++){
+      for(uint8_t c = 0;c < cols;c++){
         leds[b*30 + r*10 + c].setHSV(actualKeys[b][r][c]%edo*213/edo,255,125); //set up the rainbow
       }
     }

@@ -21,7 +21,7 @@
         },
         {
             "name": "Arduino",
-            "compilerPath": "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+            "compilerPath": "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\bin\\avr-g++",
             "compilerArgs": [
                 "-w",
                 "-std=gnu++11",
@@ -34,15 +34,18 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino",
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/variants/mega",
-                "/Users/adamschwarzenbach/Documents/Arduino/libraries/Button-master",
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/lib/gcc/avr/7.3.0/include",
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/lib/gcc/avr/7.3.0/include-fixed",
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/avr/include"
+                "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\cores\\arduino",
+                "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\variants\\mega",
+                "C:\\Users\\adam\\Documents\\Arduino\\libraries\\Control-Surface-main\\src",
+                "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\libraries\\SPI\\src",
+                "C:\\Users\\adam\\Documents\\Arduino\\libraries\\MidiKeyboardLibrary",
+                "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\libraries\\Wire\\src",
+                "c:\\users\\adam\\appdata\\local\\arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\lib\\gcc\\avr\\7.3.0\\include",
+                "c:\\users\\adam\\appdata\\local\\arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\lib\\gcc\\avr\\7.3.0\\include-fixed",
+                "c:\\users\\adam\\appdata\\local\\arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\avr\\include"
             ],
             "forcedInclude": [
-                "/Users/adamschwarzenbach/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino/Arduino.h"
+                "C:\\Users\\adam\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\cores\\arduino\\Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++11",

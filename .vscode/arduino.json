@@ -1,6 +1,6 @@
 {
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
-    "port": "/dev/tty.usbmodem1412301",
-    "sketch": "ControlButtonTest/ControlButtonTest.ino"
+    "port": "COM3",
+    "sketch": "Version3\\Version3.ino"
 }
