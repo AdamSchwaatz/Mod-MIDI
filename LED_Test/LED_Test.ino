@@ -1,5 +1,5 @@
 #include <FastLED.h>
-#define LED_PIN 5
+#define LED_PIN 11
 #define NUM_LEDS 120
 CRGB leds[NUM_LEDS];
 
@@ -48,7 +48,7 @@ void loop() {
   // Serial.println(b);
 
   for(int i = 0;i<NUM_LEDS;i++){
-    leds[i].setHSV(i%53*213/53,255,50);
+    leds[i].setHSV(i%53*213/53,255,100);
     FastLED.show();
   }
 

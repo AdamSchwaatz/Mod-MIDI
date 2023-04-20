@@ -34,28 +34,29 @@ USBDebugMIDI_Interface midi(115200);
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
-  //I2c.begin();
-  //I2c.setSpeed(true);
-  Wire.begin();
-  Wire.setClock(8000000);
-  for(int i = 0;i<4;i++){
+  I2c.begin();
+  I2c.setSpeed(true);
+  //Wire.begin();
+  //Wire.setClock(800000);
+  // for(int i = 0;i<4;i++){
     
-    Wire.beginTransmission(addresses[i]);
-    Wire.write(0x00);
-    Wire.write(0x00);
-    Wire.endTransmission();
-    Wire.beginTransmission(addresses[i]);
-    Wire.write(0x01);
-    Wire.write(0b11111100);
-    Wire.endTransmission();
-    Wire.beginTransmission(addresses[i]);
-    Wire.write(0x12);
-    Wire.write(0x01);
-    Wire.endTransmission();
-  }
+  //   Wire.beginTransmission(addresses[i]);
+  //   Wire.write(0x00);
+  //   Wire.write(0x00);
+  //   Wire.endTransmission();
+  //   Wire.beginTransmission(addresses[i]);
+  //   Wire.write(0x01);
+  //   Wire.write(0b11111100);
+  //   Wire.endTransmission();
+  //   Wire.beginTransmission(addresses[i]);
+  //   Wire.write(0x12);
+  //   Wire.write(0x01);
+  //   Wire.endTransmission();
+  // }
   
-  //I2c.scan();
-  //I2c.write(address,(uint8_t)0x00,(uint8_t)0x00); //a register to outputs
+  I2c.scan();
+  I2c.write((uint8_t)0x22,(uint8_t)0x00,(uint8_t)0x00); //a register to outputs
+  Serial.println("Working");
   //I2c.write(address,(uint8_t)0x01,(uint8_t)0b11111100);//9 and 10 are outputs
   //I2c.write(address,(uint8_t)0x12,(uint8_t)0x01); //send 1, so only output 1 is high
   
@@ -71,10 +72,11 @@ void loop(){
       startTime = millis();
       loopCount = 0;
   }
+  //loopy(addresses[2]);
 
-  for(byte i = 0; i<4;i++){
-    loopy(addresses[i]);
-  }
+  // for(byte i = 0; i<4;i++){
+  //   loopy(addresses[i]);
+  // }
 }
 
 void loopy(byte address) {

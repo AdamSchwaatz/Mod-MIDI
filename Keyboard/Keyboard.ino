@@ -30,7 +30,7 @@ States currentState = START_UP;
 
 const int numLEDs = 119; //120, starts at 0
 CRGB leds[numLEDs];
-const int ledPin = 5;
+const int ledPin = 11;
 
 uint8_t defaultAddresses[4] = {0x20,0x21,0x22,0x24};
 uint8_t actualAddresses[4] = {0x0,0x1,0x2,0x3};

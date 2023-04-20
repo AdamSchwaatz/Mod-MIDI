@@ -1,6 +1,6 @@
 {
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
-    "port": "COM3",
-    "sketch": "Version3\\Version3.ino"
+    "port": "/dev/tty.usbmodem1412201",
+    "sketch": "LED_Test/LED_Test.ino"
 }
