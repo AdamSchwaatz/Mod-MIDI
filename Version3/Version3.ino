@@ -18,7 +18,6 @@ unsigned int debounceTime = 50;
 unsigned long loopCount = 0;
 unsigned long startTime = 0;
 byte rowInput = 0;
-const uint8_t address = 0x22;
 
 const AddressMatrix<buttonRows,cols> defaultKeys = {{
   {2,5,8,11,14,17,20,23,26,29},
@@ -54,11 +53,13 @@ void setup() {
   //   Wire.endTransmission();
   // }
   
-  I2c.scan();
-  I2c.write((uint8_t)0x22,(uint8_t)0x00,(uint8_t)0x00); //a register to outputs
-  Serial.println("Working");
-  //I2c.write(address,(uint8_t)0x01,(uint8_t)0b11111100);//9 and 10 are outputs
-  //I2c.write(address,(uint8_t)0x12,(uint8_t)0x01); //send 1, so only output 1 is high
+  //I2c.scan();
+  for(byte i = 0;i<4;i++){
+    I2c.write(addresses[i],(uint8_t)0x00,(uint8_t)0x00); //a register to outputs
+    //Serial.println("Working");
+    I2c.write(addresses[i],(uint8_t)0x01,(uint8_t)0b11111100);//9 and 10 are outputs
+    //I2c.write(addresses[i],(uint8_t)0x12,(uint8_t)0x01); //send 1, so only output 1 is high
+  }
   
   midi.begin();
 }
@@ -72,7 +73,7 @@ void loop(){
       startTime = millis();
       loopCount = 0;
   }
-  //loopy(addresses[2]);
+  loopy(addresses[0]);
 
   // for(byte i = 0; i<4;i++){
   //   loopy(addresses[i]);
@@ -87,51 +88,54 @@ void loopy(byte address) {
     //this sets one column high and the others low
     if(c<8){
       num = num << c; //set the correct pin to high and all the others low
-      //I2c.write(address,(uint8_t)0x12,(uint8_t)num); //set the pins
+      I2c.write(address,(uint8_t)0x12,(uint8_t)num); //set the pins
       
-      Wire.beginTransmission(address);
-      Wire.write(0x12);
-      Wire.write(num);
-      Wire.endTransmission();
+      // Wire.beginTransmission(address);
+      // Wire.write(0x12);
+      // Wire.write(num);
+      // Wire.endTransmission();
 
       if(c==0){
-        //I2c.write(address,(uint8_t)0x13,(uint8_t)0x00); //set the pins to low
+        I2c.write(address,(uint8_t)0x13,(uint8_t)0x00); //set the pins to low
 
         
-        Wire.beginTransmission(address);
-        Wire.write(0x13);
-        Wire.write(0x00);
-        Wire.endTransmission();
+        // Wire.beginTransmission(address);
+        // Wire.write(0x13);
+        // Wire.write(0x00);
+        // Wire.endTransmission();
       }
-    }else if(c<16){
+    }else{
       num = num << (c - 8);
-      //I2c.write(address,(uint8_t)0x13,(uint8_t)num);
+      I2c.write(address,(uint8_t)0x13,(uint8_t)num);
           
-      Wire.beginTransmission(address);
-      Wire.write(0x13);
-      Wire.write(num);
-      Wire.endTransmission();
+      // Wire.beginTransmission(address);
+      // Wire.write(0x13);
+      // Wire.write(num);
+      // Wire.endTransmission();
       if(c==8){
-        //I2c.write(address,(uint8_t)0x12,(uint8_t)0x00);
+        I2c.write(address,(uint8_t)0x12,(uint8_t)0x00);
 
         
-        Wire.beginTransmission(address);
-        Wire.write(0x12);
-        Wire.write(0x00);
-        Wire.endTransmission();
+        // Wire.beginTransmission(address);
+        // Wire.write(0x12);
+        // Wire.write(0x00);
+        // Wire.endTransmission();
       }
     }
   
-    //I2c.read(address,(uint8_t)0x13,(uint8_t)1);
-    //rowInput=I2c.receive(); //read that byte and save into rowInput
-    Wire.beginTransmission(address);
-    Wire.write(0x13);
-    Wire.endTransmission();
-    Wire.requestFrom(address,(byte)1);
-    rowInput = Wire.read();
+    I2c.read(address,(uint8_t)0x13,(uint8_t)1);
+    rowInput=I2c.receive(); //read that byte and save into rowInput
+    // Wire.beginTransmission(address);
+    // Wire.write(0x13);
+    // Wire.endTransmission();
+    // Wire.requestFrom(address,(byte)1);
+    // rowInput = Wire.read();
     
     for(byte r = 0; r<keyRows;r++){
       currentTime = millis();//current time used throughout the loop
+      if(r==2){
+        Serial.println(rowInput);
+      }
       if(!bitRead(pressed[r],c)){
         //all of this is done checking if the key has been pressed
         if(!bitRead(first[r],c)){
@@ -149,6 +153,8 @@ void loopy(byte address) {
 
             //calculate Velocity of keypress
             keys[r][c].calculateVelocity();
+            Serial.print(r);
+            Serial.println(c);
             
             //debugging print statements 
             // Serial.print("First: ");
@@ -159,7 +165,7 @@ void loopy(byte address) {
             // Serial.print(keys[r][c].diff);
             // Serial.print(" Velocity: ");
             // Serial.println(keys[r][c].velocity);
-            midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
+            //midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
 
             //reset values
             bitWrite(first[r],c,false);
@@ -171,7 +177,7 @@ void loopy(byte address) {
         if((currentTime-keys[r][c].firstTime) > debounceTime){
           if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
             bitWrite(pressed[r],c,false);
-            midi.sendNoteOff({defaultKeys[r][c],CHANNEL_1},0);
+            //midi.sendNoteOff({defaultKeys[r][c],CHANNEL_1},0);
           }
         }
       }
