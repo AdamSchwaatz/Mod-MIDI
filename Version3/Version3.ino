@@ -133,9 +133,9 @@ void loopy(byte address) {
     
     for(byte r = 0; r<keyRows;r++){
       currentTime = millis();//current time used throughout the loop
-      if(r==2){
-        Serial.println(rowInput);
-      }
+      // if(r==2){
+      //   Serial.println(rowInput);
+      // }
       if(!bitRead(pressed[r],c)){
         //all of this is done checking if the key has been pressed
         if(!bitRead(first[r],c)){
@@ -153,8 +153,8 @@ void loopy(byte address) {
 
             //calculate Velocity of keypress
             keys[r][c].calculateVelocity();
-            Serial.print(r);
-            Serial.println(c);
+            // Serial.print(r);
+            // Serial.println(c);
             
             //debugging print statements 
             // Serial.print("First: ");
@@ -165,7 +165,7 @@ void loopy(byte address) {
             // Serial.print(keys[r][c].diff);
             // Serial.print(" Velocity: ");
             // Serial.println(keys[r][c].velocity);
-            //midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
+            midi.sendNoteOn({defaultKeys[r][c],CHANNEL_1},keys[r][c].velocity);
 
             //reset values
             bitWrite(first[r],c,false);
@@ -177,7 +177,7 @@ void loopy(byte address) {
         if((currentTime-keys[r][c].firstTime) > debounceTime){
           if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
             bitWrite(pressed[r],c,false);
-            //midi.sendNoteOff({defaultKeys[r][c],CHANNEL_1},0);
+            midi.sendNoteOff({defaultKeys[r][c],CHANNEL_1},0);
           }
         }
       }

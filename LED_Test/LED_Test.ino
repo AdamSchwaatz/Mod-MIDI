@@ -48,7 +48,14 @@ void loop() {
   // Serial.println(b);
 
   for(int i = 0;i<NUM_LEDS;i++){
-    leds[i].setHSV(i%53*213/53,255,100);
+    if(i%3==0){
+      leds[i].setRGB(255,0,0);
+    }else if(i%3==1){
+      leds[i].setRGB(0, 255, 0);
+    }else if(i%3==2){
+      leds[i].setRGB(0, 0, 255);
+    }
+    // leds[i].setHSV(i%53*213/53,255,255);
     FastLED.show();
   }
 

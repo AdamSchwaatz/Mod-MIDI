@@ -33,7 +33,7 @@ CRGB leds[numLEDs];
 const int ledPin = 11;
 
 uint8_t defaultAddresses[4] = {0x20,0x21,0x22,0x24};
-uint8_t actualAddresses[4] = {0x0,0x1,0x2,0x3};
+uint8_t actualAddresses[4] = {0x20,0x21,0x22,0x24};
 uint8_t tempAddresses[4] = {0x4,0x4,0x4,0x4};
 uint8_t addressCounter = 0;
 
@@ -66,8 +66,7 @@ AddressMatrix<buttonRows,cols> actualKeys[4];
 
 Key keys[totalBanks][keyRows][cols];
 
-//HairlessMIDI_Interface midi(115200); //UNCOMMENT
-
+HairlessMIDI_Interface midi(115200); //UNCOMMENT
 
 uint8_t rowPins[buttonRows] = {10,11,12,13,14,15};
 uint8_t colPins[cols] = {0,1,2,3,4,5,6,7,8,9};
@@ -91,22 +90,20 @@ unsigned int startTime = 0;
 void setup(){
   
   //Serial.begin(31250); //MIDI baud rate
-  Serial.begin(38400);
-  Serial.print("starting");
+  //Serial.begin(38400);
+  Serial.begin(115200);
   //LED Setup
   FastLED.addLeds<LED_TYPE, ledPin, COLOR_ORDER>(leds, numLEDs);//.setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(255);
-  Serial.print("starting2");
   //Control Buttons
   edoUp.begin();
   edoDown.begin();
   octaveUp.begin();
   octaveDown.begin();
   edit.begin();
-  Serial.print("starting3");
 
   tft.begin(); //initialize LCD
-  tft.setRotation(1); //rotate LCD
+  tft.setRotation(3); //rotate LCD
   logo(); //show the logo during startup
   EEPROM.write(0,255); //Use this for testing the first time setup function FINALIZE remove this at the end
   //Currently this makes the first time setup run everytime
@@ -120,34 +117,29 @@ void setup(){
     octave = EEPROM.read(2);
     currentBanks = EEPROM.read(3);
   }
-  Serial.print("starting4");
   //GPIO expander setup
   I2c.begin();
   I2c.setSpeed(true);
-  for(uint8_t b = 0;b<3;b++){
-    Serial.print("testing1");
-    Serial.println(defaultAddresses[b]);
+  //I2c.scan();
+  for(uint8_t b = 0;b<4;b++){
+    //Serial.println(defaultAddresses[b]);
     I2c.write(defaultAddresses[b],(uint8_t) 0x00,(uint8_t) 0x00); //a register to outputs
-    Serial.print("testing2");
     I2c.write(defaultAddresses[b],(uint8_t) 0x01,(uint8_t) 0b11111100);//9 and 10 are outputs
-    Serial.print("testing3");
     I2c.write(defaultAddresses[b],(uint8_t) 0x12,(uint8_t) 0x01); //send 1, so only output 1 is high
-    Serial.print("testing4");
   }
-  Serial.print("starting5");
   delay(1000);
   updateEdoKeyConfig();
-  //midi.begin(); //FINALIZE
+  midi.begin(); //FINALIZE
   currentState = PLAYING; //NOTE: this assumes that the bank setup is the same
   switchingModes();
-  Serial.print("starting6");
   updateEdoKeyConfig();
+  Serial.print("Started");
 }
   
 void loop(){
-  Serial.println("Looping");
+  //Serial.println("Looping");
   //This is just for making sure the loop isn't lagging
-  // loopCount++;
+  loopCount++;
   // if ( (millis()-startTime)>5000 ) {
   //     Serial.print("Average loops per second = ");
   //     Serial.println(loopCount/5);
@@ -163,18 +155,20 @@ void loop(){
 }
 
 void keyboard(){
+  //Serial.println(currentBanks);
+  currentBanks = 4;
   //Loop through the columns
   for(uint8_t c = 0; c<cols;c++){
     //Check the columns for pressed keys
     switch(currentBanks){
       case 4:
-        checkColumn(4,c);
-      case 3:
         checkColumn(3,c);
-      case 2:
+      case 3:
         checkColumn(2,c);
-      case 1:
+      case 2:
         checkColumn(1,c);
+      case 1:
+        checkColumn(0,c);
         break;
     }
   }//end of column loop
@@ -267,7 +261,7 @@ void checkColumn(uint8_t bank, uint8_t c){
             case PLAYING:
 
               keys[bank][r][c].calculateVelocity(); //calculate Velocity of keypress
-              //midi.sendNoteOn({actualKeys[bank][r][c],CHANNEL_1},keys[bank][r][c].velocity); //send the midi note
+              midi.sendNoteOn({actualKeys[bank][r][c],CHANNEL_1},keys[bank][r][c].velocity); //send the midi note
               //increase the brightness to full when a key is pressed
               leds[bank*30 + r*10 + c].setHSV(actualKeys[bank][r][c]%edo*213/edo,255,255); 
               break;
@@ -317,7 +311,7 @@ void checkColumn(uint8_t bank, uint8_t c){
         if(!bitRead(rowInput,(r*2)+1+2) && !bitRead(rowInput,(r*2)+2)){
           bitWrite(pressed[bank][r],c,false);
           if(currentState == PLAYING){
-            //midi.sendNoteOff({actualKeys[bank][r][c],CHANNEL_1},0);
+            midi.sendNoteOff({actualKeys[bank][r][c],CHANNEL_1},0);
             //return the brightness back down to normal
             leds[bank*30 + r*10 + c].setHSV(actualKeys[bank][r][c]%edo*213/edo,255,125); 
           }
