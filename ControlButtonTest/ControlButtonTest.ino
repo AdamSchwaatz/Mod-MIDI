@@ -1,6 +1,6 @@
-#include <Button.h>
+#include <Buttons.h>
 
-Button one(2),two(3),three(4),four(5),five(6);
+Buttons one(2),two(3),three(4),four(5),five(6);
 
 void setup(){
   Serial.begin(115200);

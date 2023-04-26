@@ -1,6 +1,6 @@
 {
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
-    "port": "/dev/tty.usbmodem1432401",
-    "sketch": "Keyboard/Keyboard.ino"
+    "port": "COM3",
+    "sketch": "Keyboard\\Keyboard.ino"
 }

@@ -73,7 +73,7 @@ void loop(){
       startTime = millis();
       loopCount = 0;
   }
-  loopy(addresses[0]);
+  loopy(addresses[1]);
 
   // for(byte i = 0; i<4;i++){
   //   loopy(addresses[i]);
@@ -104,24 +104,24 @@ void loopy(byte address) {
         // Wire.write(0x00);
         // Wire.endTransmission();
       }
-    }else{
-      num = num << (c - 8);
-      I2c.write(address,(uint8_t)0x13,(uint8_t)num);
-          
-      // Wire.beginTransmission(address);
-      // Wire.write(0x13);
-      // Wire.write(num);
-      // Wire.endTransmission();
-      if(c==8){
-        I2c.write(address,(uint8_t)0x12,(uint8_t)0x00);
-
-        
+      }else{
+        num = num << (c - 8);
+        I2c.write(address,(uint8_t)0x13,(uint8_t)num);
+            
         // Wire.beginTransmission(address);
-        // Wire.write(0x12);
-        // Wire.write(0x00);
+        // Wire.write(0x13);
+        // Wire.write(num);
         // Wire.endTransmission();
+        if(c==8){
+          I2c.write(address,(uint8_t)0x12,(uint8_t)0x00);
+
+          
+          // Wire.beginTransmission(address);
+          // Wire.write(0x12);
+          // Wire.write(0x00);
+          // Wire.endTransmission();
+        }
       }
-    }
   
     I2c.read(address,(uint8_t)0x13,(uint8_t)1);
     rowInput=I2c.receive(); //read that byte and save into rowInput
@@ -130,6 +130,18 @@ void loopy(byte address) {
     // Wire.endTransmission();
     // Wire.requestFrom(address,(byte)1);
     // rowInput = Wire.read();
+
+    // if(rowInput <=2 && !pressed[c]){
+    //   continue;
+    // }
+
+    if(rowInput>2){
+      Serial.print("Column: ");
+      Serial.print(c);
+      Serial.print(" ");
+
+      Serial.println(rowInput,BIN);
+    }
     
     for(byte r = 0; r<keyRows;r++){
       currentTime = millis();//current time used throughout the loop
